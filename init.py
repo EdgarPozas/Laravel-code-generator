@@ -1,0 +1,237 @@
+import os,sys
+sys.path.insert(1, './Generator')
+from Generator import Generator
+
+project_path="/home/edgar/Documents/Practicas/Laravel/"
+project_name="Test"
+
+database_name="Test"
+database_user="edgar"
+database_password="737"
+
+models=[
+	{
+		"table_name":"User",
+		"attributes":[
+			{
+				"name":"id_user",
+				"type":"increments",
+				"primary":True,
+				"references":{
+					"table_name":"User_Post",
+					"field":"id_user",
+					"type":"hasOne",
+					"strong":True
+				}
+			},
+			{
+				"name":"email",
+				"type":"string"
+			},
+			{
+				"name":"password",
+				"type":"string"
+			}
+		]
+	},
+	{
+		"table_name":"Post",
+		"attributes":[
+			{
+				"name":"id_post",
+				"type":"increments",
+				"primary":True,
+				"references":{
+					"table_name":"User_Post",
+					"field":"id_post",
+					"type":"hasOne",
+					"strong":True
+				}
+			},
+			{
+				"name":"title",
+				"type":"string",
+				"primary":False,
+			},
+			{
+				"name":"content",
+				"type":"string"
+			}
+		]
+	},
+	{
+		"table_name":"User_Post",
+		"attributes":[
+			{
+				"name":"id_user",
+				"type":"integer",
+				"constraint":["unsigned()"],
+				"references":{
+					"table_name":"User",
+					"field":"id_user",
+					"type":"belongsTo",
+					"strong":False
+				}
+			},
+			{
+				"name":"id_post",
+				"type":"integer",
+				"constraint":["unsigned()"],
+				"references":{
+					"table_name":"Post",
+					"field":"id_post",
+					"type":"belongsTo"
+				}
+			}
+		]
+	},
+]
+
+controllers=[
+	{
+		"name":"IndexController",
+		"methods":[
+			{
+				"route":"/",
+				"method":"GET",
+				"function":"index"
+			}
+		]
+	},
+	{
+		"name":"UserController",
+		"model":"User",
+		"methods":[
+			{
+				"route":"/users",
+				"method":"GET",
+				"function":"index"
+			},
+			{
+				"route":"/users/{id_user}",
+				"method":"GET",
+				"function":"select",
+				"parameters":["id_user"]
+			},
+			{
+				"route":"/users",
+				"method":"POST",
+				"function":"create"
+			},
+			{
+				"route":"/users/update",
+				"method":"POST",
+				"function":"update",
+				"body":["id_user"]
+			},
+			{
+				"route":"/users/delete",
+				"method":"POST",
+				"function":"delete",
+				"body":["id_user"]
+			}
+		]
+	},
+	{
+		"name":"PostController",
+		"model":"Post",
+		"methods":[
+			{
+				"route":"/posts",
+				"method":"GET",
+				"function":"index"
+			},
+			{
+				"route":"/posts/{id_post}",
+				"method":"GET",
+				"function":"select",
+				"parameters":["id_post"]
+			},
+			{
+				"route":"/posts",
+				"method":"POST",
+				"function":"create"
+			},
+			{
+				"route":"/posts/update",
+				"method":"POST",
+				"function":"update",
+				"body":["id_post"]
+			},
+			{
+				"route":"/posts/delete",
+				"method":"POST",
+				"function":"delete",
+				"body":["id_post"]
+			}
+		]
+	}
+]
+
+views=[
+	{
+		"name":"index",
+		"folder":"index"
+	},
+	{
+		"name":"user",
+		"folder":"user",
+		"controller":"UserController",
+		"components":[
+			{
+				"name":"user-form",
+				"type":"complete",
+				"model":"User",
+				"props":["users"],
+			}
+		]
+	},
+	{
+		"name":"user-individual",
+		"folder":"user",
+		"controller":"UserController",
+		"components":[
+			{
+				"name":"user-form-individual",
+				"type":"individual",
+				"model":"User",
+				"props":["user"],
+			}
+		]
+	},
+	{
+		"name":"post",
+		"folder":"post",
+		"components":[
+			{
+				"name":"post-form",
+				"type":"complete",
+				"model":"Post",
+				"props":["posts"]
+			}
+		]
+	},
+	{
+		"name":"post-individual",
+		"folder":"post",
+		"controller":"PostController",
+		"components":[
+			{
+				"name":"post-form-individual",
+				"type":"individual",
+				"model":"Post",
+				"props":["post"],
+			}
+		]
+	},
+]
+
+g=Generator(project_path,project_name)
+g.init(vue=True)
+g.set_database(database_name,database_user,database_password)
+g.create_model(models)
+g.create_migration(models)
+g.create_controller(controllers,models)
+g.create_route(controllers)
+g.create_views(views)
+g.create_components(views,controllers,models)
