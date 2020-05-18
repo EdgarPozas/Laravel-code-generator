@@ -1,3 +1,3 @@
-	public function {{function_name}} ({{function_parameters}}){
+	public function {{function_name}}({{function_parameters}}){
 		{{body}}	
 	}

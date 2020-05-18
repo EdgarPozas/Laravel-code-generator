@@ -12,7 +12,7 @@
     export default {
         data(){
             return {
-                bar_items:[{{navigation_controllers}}]
+                bar_items:[{{navigation_controllers}}],
             }
         }
     }

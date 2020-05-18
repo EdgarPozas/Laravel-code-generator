@@ -1,7 +1,7 @@
 import os
 import shutil
 from Parser import parse_template,write_template
-from Additional import _find_model,_find_method,_find_controller
+from Additional import _find_model,_find_method,_find_controller,_create_str_body_middleware
 from Additional import _create_str_find_one,_create_str_array,_create_str_migration
 from Additional import _create_str_route,_create_str_imports,_create_str_parameters
 from Additional import _create_str_body_method,_create_str_body_view,_create_str_navigation
@@ -57,8 +57,11 @@ class Generator:
 			s_hidden=""
 			s_casts=""
 			s_foreign=""
+			s_timestamps=""
 
 			for attribute in model["attributes"]:
+				if attribute["type"]!="timestamps":
+					s_timestamps="public $timestamps = false;" 
 				if "references" in attribute.keys():
 					references=attribute["references"]
 					values_function={
@@ -75,6 +78,7 @@ class Generator:
 				"hidden":s_hidden,
 				"casts":s_casts,
 				"foreign":s_foreign,
+				"timestamps":s_timestamps
 			}
 
 			content_file=parse_template("./templates/model.php",values)
@@ -273,7 +277,7 @@ class Generator:
 					if "model" in component.keys(): 
 						model_selected=_find_model(self.models,component["model"])
 						if model_selected:
-							s_component_form+=_create_str_component_form(model_selected)
+							s_component_form+=_create_str_component_form(component,model_selected)
 							s_component_json+=_create_str_json(model_selected)
 
 						values_component={
@@ -292,6 +296,10 @@ class Generator:
 						name_template="./templates/component-model.vue"
 						if component["type"]=="individual":
 							name_template="./templates/component-model-individual.vue"
+						elif component["type"]=="login":
+							name_template="./templates/login.vue"
+						elif component["type"]=="register":
+							name_template="./templates/register.vue"
 
 						content_file=parse_template(name_template,values_component)
 						write_template(project_component_d_path+"/{0}.vue".format(component["name"]),content_file)
@@ -311,3 +319,29 @@ class Generator:
 
 		content_file=parse_template("./templates/app.js",values)
 		write_template(self.project_path_full+"/resources/js/app.js",content_file)
+
+	def create_middleware(self,middlewares):
+		self.middlewares=middlewares
+
+		s_middlewares=""
+
+		for middleware in self.middlewares:
+			os.system("php "+self.project_path_full+"/artisan make:middleware "+middleware["name"])
+
+			s_code=_create_str_body_middleware(middleware)
+
+			values={
+				"code":s_code
+			}
+
+			content_file=parse_template("./templates/middleware.php",values)
+			write_template(self.project_path_full+"/app/Http/Middleware/{0}.php".format(middleware["name"]),content_file)
+
+			s_middlewares+="\t\t'{0}'=>\App\Http\Middleware\{1}::class,".format(middleware["alias"],middleware["name"])
+
+		values={
+			"middlewares":s_middlewares
+		}
+
+		content_file=parse_template("./templates/Kernel.php",values)
+		write_template(self.project_path_full+"/app/Http/Kernel.php",content_file)

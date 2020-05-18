@@ -15,6 +15,9 @@ def _create_str_migration(model):
 
 		migration_template="\t\t\t$table->{{type}}('{{name}}'){{constraint}};\n"
 
+		if attribute["type"]=="timestamps":
+			migration_template="\t\t\t$table->{{type}};\n"
+
 		s_constraint=""
 
 		if "constraint" in attribute.keys():
@@ -55,22 +58,29 @@ def _create_str_imports(model):
 
 def _create_str_route(controller):
 	s_route=""
-
-	route_template="Route::{{method}}(\"{{route}}\",\"{{controller}}@{{function}}\");\n"
+	route_template=""
 
 	for method in controller["methods"]:
+		s_middlewares=""
+
+		if "middlewares" in method.keys():
+			route_template="Route::{{method}}(\"{{route}}\",\"{{controller}}@{{function}}\")->middleware({{middlewares}});\n"
+			s_middlewares=_create_str_array(method["middlewares"])
+		else:
+			route_template="Route::{{method}}(\"{{route}}\",\"{{controller}}@{{function}}\");\n"
 		values={
 			"method":method["method"].lower(),
 			"route":method["route"],
 			"controller":controller["name"],
-			"function":method["function"]
+			"function":method["function"],
+			"middlewares":s_middlewares
 		}
 		s_route+=parse_template(route_template,values,False)
 	return s_route
 
 def _create_str_parameters(method):
 	s_parameters=""
-	if method["method"]=="POST":
+	if method["method"]=="POST" or method["function"]=="logout":
 		s_parameters+="Request $request,"
 
 	if "parameters" in method.keys():
@@ -87,15 +97,38 @@ def _create_str_body_method(method,model_selected):
 
 	if "code" in method.keys():
 		s_body_method+=method["code"]+"\n"
-
-
 	if method["route"]=="/":
 		s_body_method+="return view('index.index');"
-	
-	elif method["function"]=="index":
+	elif method["function"]=="login":
 		if model_selected:
-			s_body_method+="${0}s={1}::all();\n".format(model_selected["table_name"].lower(),model_selected["table_name"])
-			s_body_method+="\t\treturn view('{0}.{0}',['{0}s'=>${0}s]);".format(model_selected["table_name"].lower())
+			s_body_method+=_create_str_find_one(model_selected,method,True)+"\n"
+			s_body_method+="\t\tif(!$user){\n"
+			s_body_method+='\t\t\treturn view("login.login");\n'
+			s_body_method+="\t\t}\n"
+			s_body_method+="\t\telse{\n"
+			s_body_method+='\t\t\t$request->session();\n'
+			s_body_method+='\t\t\t$request->session()->put("login",true);\n'
+			s_body_method+='\t\t\treturn redirect("/");\n'
+			s_body_method+="\t\t}"
+	elif method["function"]=="register":
+		if model_selected:
+			s_body_method+="${0}= new {1};\n".format(model_selected["table_name"].lower(),model_selected["table_name"])
+			s_body_method+=_create_str_set_attributes(model_selected)
+			s_body_method+="\t\t${0}->save();\n".format(model_selected["table_name"].lower())
+			s_body_method+='\t\treturn redirect("/");'
+	elif method["function"]=="logout":
+		s_body_method+="$session=$request->session();\n"
+		s_body_method+='\t\t$session->forget("login");\n'
+		s_body_method+='\t\treturn redirect("/");'
+	elif method["function"]=="index":
+		if method["route"]=="/login":
+			s_body_method+="return view('login.login');"
+		elif method["route"]=="/register":
+			s_body_method+="return view('register.register');"
+		else:
+			if model_selected:
+				s_body_method+="${0}s={1}::all();\n".format(model_selected["table_name"].lower(),model_selected["table_name"])
+				s_body_method+="\t\treturn view('{0}.{0}',['{0}s'=>${0}s]);".format(model_selected["table_name"].lower())
 	elif method["function"]=="select":
 		if model_selected:
 			s_body_method+=_create_str_find_one(model_selected,method,True)+"\n"
@@ -219,7 +252,11 @@ def _create_str_navigation(controllers):
 				s_navigation_controllers+="{"
 				s_navigation_controllers+="url:'{0}',name:'{1}'".format(method["route"],controller["name"])
 				s_navigation_controllers+=",},"
-				break
+			elif method["function"]=="logout":
+				s_navigation_controllers+="{"
+				s_navigation_controllers+="url:'{0}',name:'{1}'".format(method["route"],"logout")
+				s_navigation_controllers+=",},"
+
 	if len(s_navigation_controllers)>0:
 		s_navigation_controllers=s_navigation_controllers[:-3]+"}"
 
@@ -241,15 +278,22 @@ def _find_method(methods,method):
 				break
 		return method_selected
 
-def _create_str_component_form(model_selected):
+def _create_str_component_form(component,model_selected):
 	s_component_form=""
+	use_login=component["type"]=="login" or component["type"]=="register"
+
 	for attribute in model_selected["attributes"]:
 		if attribute["type"]=="increments":
 			continue
 
+		if use_login:
+			s_component_form+="\t"
 		s_component_form+="\t\t\t<label>{0}</label>\n".format(attribute["name"])
 
-		input_template="\t\t\t<input type='{{type}}' v-model='item_actual.{{name}}' value='item_actual.{{name}}' name='{{name}}'/>\n"
+		if use_login:
+			input_template="\t\t\t\t<input type='{{type}}' name='{{name}}'/>\n"
+		else:
+			input_template="\t\t\t<input type='{{type}}' v-model='item_actual.{{name}}' value='item_actual.{{name}}' name='{{name}}'/>\n"
 
 		s_type="text"
 		if attribute["type"]=="integer":
@@ -278,3 +322,19 @@ def _create_str_link(method_select):
 	url_item="'"+method_select["route"].replace("{","'+item.").replace("}","")
 	link_template='<a :href="{0}">Ver</a>'.format(url_item)
 	return link_template
+
+def _create_str_body_middleware(middleware):
+	s_middleware=""
+
+	if "type" in middleware.keys():
+		if middleware["type"]=="login":
+			s_middleware+='\t\tif(!$request->session()->has("login"))\n'
+			s_middleware+='\t\t\treturn redirect("/");\n'
+			s_middleware+="\t\treturn $next($request);"
+		else:
+			if "code" in middleware.keys():
+				s_middleware+=middleware["code"]
+	else:
+		if "code" in middleware.keys():
+			s_middleware+=middleware["code"]
+	return s_middleware
