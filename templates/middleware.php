@@ -2,9 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use Auth;
 use Closure;
 
-class LoginMiddleware
+class #name#
 {
     /**
      * Handle an incoming request.
@@ -15,6 +16,12 @@ class LoginMiddleware
      */
     public function handle($request, Closure $next)
     {
-{{code}}
+#if #type#=="login"
+        if(!Auth::check())
+            return redirect("/");
+        return $next($request);
+#else
+        return $next($request); 
+#endif
     }
 }

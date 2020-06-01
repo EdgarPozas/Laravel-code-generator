@@ -1,6 +1,6 @@
 import os,sys
 sys.path.insert(1, './Generator')
-from Generator import Generator
+from Generator import *
 
 project_path="/home/edgar/Documents/Practicas/Laravel/"
 project_name="Test"
@@ -11,17 +11,16 @@ database_password="737"
 
 models=[
 	{
-		"table_name":"User",
-		"attributes":[
+		"name":"User",
+		"fields":[
 			{
 				"name":"id_user",
 				"type":"increments",
 				"primary":True,
 				"references":{
-					"table_name":"User_Post",
+					"name":"User_Post",
 					"field":"id_user",
 					"type":"hasOne",
-					"strong":True
 				}
 			},
 			{
@@ -35,17 +34,16 @@ models=[
 		]
 	},
 	{
-		"table_name":"Post",
-		"attributes":[
+		"name":"Post",
+		"fields":[
 			{
 				"name":"id_post",
 				"type":"increments",
 				"primary":True,
 				"references":{
-					"table_name":"User_Post",
+					"name":"User_Post",
 					"field":"id_post",
 					"type":"hasOne",
-					"strong":True
 				}
 			},
 			{
@@ -60,17 +58,16 @@ models=[
 		]
 	},
 	{
-		"table_name":"User_Post",
-		"attributes":[
+		"name":"User_Post",
+		"fields":[
 			{
 				"name":"id_user",
 				"type":"integer",
 				"constraint":["unsigned()"],
 				"references":{
-					"table_name":"User",
+					"name":"User",
 					"field":"id_user",
-					"type":"belongsTo",
-					"strong":False
+					"type":"belongsTo"
 				}
 			},
 			{
@@ -78,7 +75,7 @@ models=[
 				"type":"integer",
 				"constraint":["unsigned()"],
 				"references":{
-					"table_name":"Post",
+					"name":"Post",
 					"field":"id_post",
 					"type":"belongsTo"
 				}
@@ -86,61 +83,16 @@ models=[
 		]
 	},
 ]
-
-middlewares=[
-	{
-		"name":"LoginMiddleware",
-		"alias":"login",
-		"type":"login"
-	}
-]
-
 controllers=[
 	{
 		"name":"IndexController",
 		"methods":[
 			{
+				"name":"index",
 				"route":"/",
 				"method":"GET",
-				"function":"index",
-			}
-		]
-	},
-	{
-		"name":"LoginController",
-		"model":"User",
-		"methods":[
-			{
-				"route":"/login",
-				"method":"GET",
-				"function":"index"
-			},
-			{
-				"route":"/login",
-				"method":"POST",
-				"function":"login",
-				"body":["email","password"],
-			},
-			{
-				"route":"/logout",
-				"method":"GET",
-				"function":"logout",
-			}
-		]
-	},
-	{
-		"name":"RegisterController",
-		"model":"User",
-		"methods":[
-			{
-				"route":"/register",
-				"method":"GET",
-				"function":"index",
-			},
-			{
-				"route":"/register",
-				"method":"POST",
-				"function":"register",
+				"type":"index", #blank,login,register,logout,index,select,create,update,delete,
+				"view":"index",
 			}
 		]
 	},
@@ -149,37 +101,48 @@ controllers=[
 		"model":"User",
 		"methods":[
 			{
+				"name":"index",
 				"route":"/users",
 				"method":"GET",
-				"function":"index",
-				"middlewares":["login"]
+				"middlewares":["login"],
+				"type":"index",
+				"view":"user",
+				"request-type":"http" #ajax,http
 			},
 			{
+				"name":"select",
 				"route":"/users/{id_user}",
 				"method":"GET",
-				"function":"select",
-				"parameters":["id_user"],
-				"middlewares":["login"]
+				"path-params":["id_user"],
+				"middlewares":["login"],
+				"type":"select",
+				"view":"user-individual"
 			},
 			{
+				"name":"create",
 				"route":"/users",
 				"method":"POST",
-				"function":"create",
-				"middlewares":["login"]
+				"middlewares":["login"],
+				"type":"create",
+				"request-type":"ajax"
 			},
 			{
+				"name":"update",
 				"route":"/users/update",
 				"method":"POST",
-				"function":"update",
-				"body":["id_user"],
-				"middlewares":["login"]
+				"body-params":["id_user"],
+				"middlewares":["login"],
+				"type":"update",
+				"request-type":"ajax"
 			},
 			{
+				"name":"delete",
 				"route":"/users/delete",
 				"method":"POST",
-				"function":"delete",
-				"body":["id_user"],
-				"middlewares":["login"]
+				"body-params":["id_user"],
+				"middlewares":["login"],
+				"type":"delete",
+				"request-type":"ajax"
 			}
 		]
 	},
@@ -188,37 +151,48 @@ controllers=[
 		"model":"Post",
 		"methods":[
 			{
+				"name":"index",
 				"route":"/posts",
 				"method":"GET",
-				"function":"index",
-				"middlewares":["login"]
+				"middlewares":["login"],
+				"type":"index",
+				"view":"post",
+				"request-type":"http" #ajax,http
 			},
 			{
+				"name":"select",
 				"route":"/posts/{id_post}",
 				"method":"GET",
-				"function":"select",
-				"parameters":["id_post"],
-				"middlewares":["login"]
+				"path-params":["id_post"],
+				"middlewares":["login"],
+				"type":"select",
+				"view":"post-individual"
 			},
 			{
+				"name":"create",
 				"route":"/posts",
 				"method":"POST",
-				"function":"create",
-				"middlewares":["login"]
+				"middlewares":["login"],
+				"type":"create",
+				"request-type":"ajax"
 			},
 			{
+				"name":"update",
 				"route":"/posts/update",
 				"method":"POST",
-				"function":"update",
-				"body":["id_post"],
-				"middlewares":["login"]
+				"body-params":["id_post"],
+				"middlewares":["login"],
+				"type":"update",
+				"request-type":"ajax"
 			},
 			{
+				"name":"delete",
 				"route":"/posts/delete",
 				"method":"POST",
-				"function":"delete",
-				"body":["id_post"],
-				"middlewares":["login"]
+				"body-params":["id_post"],
+				"middlewares":["login"],
+				"type":"delete",
+				"request-type":"ajax"
 			}
 		]
 	}
@@ -227,92 +201,66 @@ controllers=[
 views=[
 	{
 		"name":"index",
-		"folder":"index"
+		"folder":"index",
 	},
 	{
 		"name":"user",
 		"folder":"user",
-		"controller":"UserController",
-		"components":[
-			{
-				"name":"user-form",
-				"type":"complete",
-				"model":"User",
-				"props":["users"],
-			}
-		]
+		"components":["user-form"]
 	},
 	{
 		"name":"user-individual",
 		"folder":"user",
-		"controller":"UserController",
-		"components":[
-			{
-				"name":"user-form-individual",
-				"type":"individual",
-				"model":"User",
-				"props":["user"],
-			}
-		]
+		"components":["user-form-individual"]
 	},
 	{
 		"name":"post",
 		"folder":"post",
-		"components":[
-			{
-				"name":"post-form",
-				"type":"complete",
-				"model":"Post",
-				"props":["posts"]
-			}
-		]
+		"components":["post-form"]
 	},
 	{
 		"name":"post-individual",
 		"folder":"post",
-		"controller":"PostController",
-		"components":[
-			{
-				"name":"post-form-individual",
-				"type":"individual",
-				"model":"Post",
-				"props":["post"],
-			}
-		]
-	},
-	{
-		"name":"login",
-		"folder":"login",
-		"controller":"LoginController",
-		"components":[
-			{
-				"name":"login-form",
-				"type":"login",
-				"model":"User"
-			}
-		]
-	},
-	{
-		"name":"register",
-		"folder":"register",
-		"controller":"RegisterController",
-		"components":[
-			{
-				"name":"register-form",
-				"type":"register",
-				"model":"User"
-			}
-		]
-	},
+		"components":["post-form-individual"]
+	}
 ]
 
+components=[
+	{
+		"name":"user-form",
+		"type":"complete", #blank,complete,individual
+		"props":["users"],
+	},
+	{
+		"name":"user-form-individual",
+		"type":"individual",
+		"props":["user"]
+	},
+	{
+		"name":"post-form",
+		"type":"complete", #blank,complete,individual
+		"props":["posts"],
+	},
+	{
+		"name":"post-form-individual",
+		"type":"individual",
+		"props":["post"]
+	}
+]
+
+
 g=Generator(project_path,project_name)
-# g.init(vue=True)
-# g.set_database(database_name,database_user,database_password)
-# g.create_model(models)
-# g.create_migration(models)
-g.create_middleware(middlewares)
-g.create_controller(controllers,models)
+g.init()
+g.set_database(database_name,database_user,database_password)
+g.use_login(True)
+
+g.create_models(models)
+g.create_migrations(models,False)
+
+g.create_middlewares()
+g.create_controllers(controllers,models,views)
 g.create_route(controllers)
-g.create_views(views)
-g.create_components(views,controllers,models)
+
+g.create_views(views,components)
+g.create_components(components,views,controllers,models)
+g.create_nav_bar(controllers)

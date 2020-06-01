@@ -9,9 +9,8 @@
     export default {
         data(){
             return {
-                
+            	
             }
         },
-        props:[{{props}}],
     }
 </script>

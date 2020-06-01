@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-{{imports}}
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+#imports#
 
-class {{name}} extends Controller
+class #name# extends Controller
 {
-{{methods}}
+#methods#
 }

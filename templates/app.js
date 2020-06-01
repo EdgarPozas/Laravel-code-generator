@@ -16,11 +16,13 @@ window.Vue = require('vue');
  * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
  */
 
-// const files = require.context('./', true, /\.vue$/i)
-// files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
+const files = require.context('./', true, /\.vue$/i)
 
-Vue.component('navigation-bar', require('./components/default/navigation-bar.vue').default);
-{{components}}
+files.keys().map(key => {
+	let names=key.split('/');
+	let name=names[names.length-1].replace(".vue","");
+	Vue.component(name, files(key).default);
+});
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to

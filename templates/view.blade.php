@@ -1,11 +1,11 @@
 @extends("templates.base")
 
-@section("title","{{title}}")
+@section("title","#title#")
 
 @section("body")
-{{components}}
+#components#
 @endsection
 
 @section("scripts")
-{{script_components}}
+#script_components#
 @endsection

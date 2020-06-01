@@ -1,4 +1,7 @@
-This project is a code generator for Laravel ^7.x.
+
+<h1>Laravel code generator</h1>
+
+This project is a code generator for Laravel ^7.x with Vuejs ^2.5
 
 The main purpose of this code generator is simplify the repeatitive operations involve in the setup.
 This project generate simple code for:
@@ -10,7 +13,7 @@ This project generate simple code for:
 <br>
 ->Views
 <br>
-->Components (optional and it works with Vuejs)
+->Components
 <br>
 <br>
 In the init.py you define the project config, the database config and the structure that you want to use. 

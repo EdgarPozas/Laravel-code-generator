@@ -11,7 +11,11 @@
     <body>
 
 		<div id="app">
+#if #use_login#
+            <navigation-bar logged={{Auth::check()}}></navigation-bar>
+#else
             <navigation-bar></navigation-bar>
+#endif
 			@yield("body")
         </div>
 
